@@ -1,0 +1,18 @@
+version: "3.8"
+services:
+  anomaly_app:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - EMAIL_ENABLED=false
+      - SMS_ENABLED=false
+      - TO_EMAIL=you@example.com
+      - FROM_EMAIL=your@gmail.com
+      - APP_PASSWORD=your_app_password
+      - TO_PHONE=+1234567890
+      - FROM_PHONE=+1098765432
+      - TWILIO_SID=your_twilio_sid
+      - TWILIO_TOKEN=your_twilio_token
