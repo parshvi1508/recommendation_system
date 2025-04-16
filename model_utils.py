@@ -12,19 +12,64 @@ FEATURE_COLS = [
     'num_recommend_clicks',
     'quiz_accuracy',
     'forum_activity',
-    'location_change'
+    'location_change',
+    'total_videos_available',    
+    'videos_watched',           
+    'video_completion_rate'      
 ]
 
 def generate_sample_data():
     np.random.seed(42)
+    n_samples = 100
+    
+    # Generate student IDs
+    student_ids = [f"STU{i:03d}" for i in range(1, n_samples + 1)]
+    
+    # Total videos in course (fixed at 50)
+    total_videos = np.full(n_samples, 50)
+    
+    # Videos watched (with some realistic patterns)
+    videos_watched = np.zeros(n_samples)
+    # Regular students (60%)
+    videos_watched[:60] = np.random.randint(35, 51, 60)
+    # Struggling students (30%)
+    videos_watched[60:90] = np.random.randint(10, 35, 30)
+    # Inactive students (10%)
+    videos_watched[90:] = np.random.randint(0, 10, 10)
+    
+    # Calculate completion rate
+    completion_rate = (videos_watched / total_videos) * 100
+    
+    # Generate correlated quiz scores
+    quiz_accuracy = np.zeros(n_samples)
+    for i in range(n_samples):
+        base_score = completion_rate[i] * 0.7  # Base score correlates with video completion
+        variation = np.random.normal(0, 15)    # Add some random variation
+        quiz_accuracy[i] = max(0, min(100, base_score + variation))  # Clip between 0-100
+    
     return pd.DataFrame({
-        'user_id': np.arange(1, 101),
-        'avg_time_per_video': np.random.uniform(2, 60, 100),
-        'num_course_views': np.random.randint(10, 100, 100),
-        'num_recommend_clicks': np.random.randint(0, 30, 100),
-        'quiz_accuracy': np.random.uniform(0, 100, 100),
-        'forum_activity': np.random.randint(0, 50, 100),
-        'location_change': np.random.choice([0, 1], size=100),
+        'student_id': student_ids,
+        'avg_time_per_video': np.where(
+            videos_watched > 0,
+            np.random.uniform(5, 45, n_samples),  # Active students
+            np.random.uniform(0, 5, n_samples)    # Inactive students
+        ),
+        'num_course_views': np.where(
+            videos_watched > 30,
+            np.random.randint(40, 100, n_samples),  # Active students
+            np.random.randint(5, 40, n_samples)     # Less active students
+        ),
+        'num_recommend_clicks': np.random.randint(0, 30, n_samples),
+        'quiz_accuracy': quiz_accuracy,
+        'forum_activity': np.where(
+            completion_rate > 50,
+            np.random.randint(10, 50, n_samples),  # Active students
+            np.random.randint(0, 10, n_samples)    # Less active students
+        ),
+        'location_change': np.random.choice([0, 1], size=n_samples, p=[0.8, 0.2]),
+        'total_videos_available': total_videos,
+        'videos_watched': videos_watched,
+        'video_completion_rate': completion_rate
     })
 
 def train_model(df):
